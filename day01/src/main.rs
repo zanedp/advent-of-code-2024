@@ -11,15 +11,12 @@ const EXAMPLE_INPUT: &str = r#"3   4
 fn main() {
     let input_text = EXAMPLE_INPUT;
     // let input_text = include_str!("input.txt");
-    let (mut left, mut right) = input_text
+    let (mut left, mut right): (Vec<_>, Vec<_>) = input_text
         .lines()
-        .map(|line| {
-            let mut parts = line.split_whitespace();
-            let a: u64 = parts.next().unwrap().parse().unwrap();
-            let b: u64 = parts.next().unwrap().parse().unwrap();
-            (a, b)
-        })
-        .collect::<(Vec<_>, Vec<_>)>();
+        .map(|line| line.split_whitespace())
+        .map(|mut parts| (parts.next().unwrap(), parts.next().unwrap()))
+        .map(|(a, b)| (a.parse::<u64>().unwrap(), b.parse::<u64>().unwrap()))
+        .collect();
     left.sort();
     right.sort();
 
