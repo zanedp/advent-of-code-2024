@@ -31,8 +31,8 @@ fn main() {
     for &x in right.iter() {
         *right_count.entry(x).or_default() += 1;
     }
-    let similarity_score = left.iter().fold(0, |acc, x| {
-        acc + x * right_count.get(x).copied().unwrap_or_default()
-    });
+    let similarity_score = left
+        .iter()
+        .fold(0, |acc, x| acc + x * right_count.get(x).unwrap_or(&0));
     dbg!(similarity_score);
 }
