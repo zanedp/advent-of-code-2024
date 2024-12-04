@@ -1,4 +1,5 @@
-const EXAMPLE_INPUT: &str = r#"MMMSXXMASM
+const EXAMPLE_INPUT: &str = r#"\
+MMMSXXMASM
 MSAMXMSMSA
 AMXSXMAAMM
 MSAMASMSMX
@@ -34,9 +35,13 @@ impl Direction {
             _ => unreachable!(),
         }
     }
+
+    pub fn is_diagonal(&self) -> bool {
+        self.0 != 0 && self.1 != 0
+    }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Position {
     pub row: isize,
     pub col: isize,
@@ -67,10 +72,26 @@ fn main() {
         .map(|line| line.chars().collect::<Vec<_>>())
         .collect::<Vec<_>>();
 
+    // -- Part 1 --
     let needle = "XMAS";
-    let result = find_word(&grid, needle);
-    // dbg!(&result);
-    dbg!(result.map(|x| x.len()));
+    let pt1_locations = find_word(&grid, needle);
+    dbg!(pt1_locations.map(|x| x.len()));
+
+    // -- Part 2 --
+    let needle = "MAS";
+    let pt2_locations = find_word(&grid, needle);
+    let pt2_a_locations = pt2_locations
+        .expect("Should have found at least some locations")
+        .iter()
+        .filter(|(_, dir)| dir.is_diagonal())
+        .map(|(pos, dir)| pos.step(*dir))
+        .collect::<Vec<_>>();
+    let mut a_location_counts = std::collections::HashMap::new();
+    for pos in &pt2_a_locations {
+        *a_location_counts.entry(*pos).or_insert(0) += 1;
+    }
+    a_location_counts.retain(|_, &mut count| count > 1);
+    dbg!(a_location_counts.len());
 }
 
 fn find_word(grid: &[Vec<char>], word: &str) -> Option<Vec<(Position, Direction)>> {
