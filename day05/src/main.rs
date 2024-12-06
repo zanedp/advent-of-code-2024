@@ -68,7 +68,7 @@ fn main() {
     // assert_eq!(2, get_middle(&[0, 1, 2, 3, 4, 5]));
 
     let input = EXAMPLE;
-    let input = include_str!("input.txt");
+    // let input = include_str!("input.txt");
     let (ordering, update_pages) = parse(input);
     // println!("ordering: {:?}", ordering);
     // println!("update_pages: {:?}", update_pages);
@@ -107,6 +107,35 @@ fn main() {
         .filter(|group| is_in_order(group))
         .collect::<Vec<_>>();
 
-    let middle_sum = correct_groups.iter().map(|x| get_middle(x)).sum::<u32>();
-    dbg!(middle_sum);
+    let correct_middle_sum = correct_groups.iter().map(|x| get_middle(x)).sum::<u32>();
+    dbg!(correct_middle_sum);
+
+    // -- Part 2 ---
+    let incorrect_groups = update_pages
+        .iter()
+        .filter(|group| !is_in_order(group))
+        .collect::<Vec<_>>();
+
+    let fix_order = |group: &[u32]| -> Vec<u32> {
+        let mut ordered = group.to_vec();
+        ordered.sort_by(|a, b| {
+            let pages_that_must_come_after_a = ordering_before_to_after.get(a);
+            if let Some(pages_that_must_come_after_a) = pages_that_must_come_after_a {
+                if pages_that_must_come_after_a.contains(b) {
+                    return std::cmp::Ordering::Less;
+                } else {
+                    return std::cmp::Ordering::Greater;
+                }
+            }
+            std::cmp::Ordering::Equal
+        });
+        ordered
+    };
+
+    let fixed_groups = incorrect_groups
+        .iter()
+        .map(|group| fix_order(group))
+        .collect::<Vec<_>>();
+    let fixed_middle_sum = fixed_groups.iter().map(|x| get_middle(x)).sum::<u32>();
+    dbg!(fixed_middle_sum);
 }
