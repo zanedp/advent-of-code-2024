@@ -64,30 +64,25 @@ impl Position {
     }
 }
 
-fn is_off_map(pos: Position, map_dimensions: (usize, usize)) -> bool {
-    pos.0 < 0
-        || pos.1 < 0
-        || pos.0 >= map_dimensions.0 as isize
-        || pos.1 >= map_dimensions.1 as isize
-}
-
 fn find_next_pos(
     start_pos: Position,
     start_dir: Direction,
     map: &[Vec<char>],
 ) -> Option<(Position, Direction)> {
     let mut dir = start_dir;
-    let map_dimensions = (map.len(), map[0].len());
     loop {
         let next_pos = start_pos.step(dir);
-        if is_off_map(next_pos, map_dimensions) {
-            println!("Off map @ ({}, {})", next_pos.0, next_pos.1);
-            return None;
-        }
-        if map[next_pos.0 as usize][next_pos.1 as usize] == '#' {
-            dir = dir.next();
-        } else {
-            return Some((next_pos, dir));
+        match map
+            .get(next_pos.0 as usize)
+            .and_then(|row| row.get(next_pos.1 as usize))
+        {
+            Some('#') => {
+                dir = dir.next();
+            }
+            Some(_) => {
+                return Some((next_pos, dir));
+            }
+            None => return None,
         }
     }
 }
