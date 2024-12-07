@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 const EXAMPLE_INPUT: &str = r#"....#.....
 .........#
 ..........
@@ -9,21 +11,47 @@ const EXAMPLE_INPUT: &str = r#"....#.....
 #.........
 ......#..."#;
 
-fn main() {
-    // let input = EXAMPLE_INPUT;
-    let input = include_str!("input.txt");
-    let map: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
-    let map = walk(&map);
-    println!("Final map:");
+#[allow(dead_code, reason = "For debugging purposes")]
+fn print_map(map: &[Vec<char>]) {
     map.iter().for_each(|row| {
         println!("{}", row.iter().collect::<String>());
     });
-    let distinct_positions = map
+}
+
+fn main() {
+    let input = EXAMPLE_INPUT;
+    // let input = include_str!("input.txt");
+    let map: Vec<Vec<char>> = input.lines().map(|line| line.chars().collect()).collect();
+    let final_map = walk_until_off_map(&map);
+    let distinct_positions = final_map
         .iter()
-        .flat_map(|row| row.iter())
-        .filter(|&&cell| cell == 'X')
+        .enumerate()
+        .flat_map(|(r, row)| {
+            row.iter().enumerate().filter_map(move |(c, &cell)| {
+                if cell == 'X' {
+                    Some(Position(r as isize, c as isize))
+                } else {
+                    None
+                }
+            })
+        })
+        .collect::<HashSet<Position>>();
+    let distinct_positions_count = distinct_positions.len();
+    dbg!(distinct_positions_count);
+
+    let start_pos = find_start(&map); // let's not look for it every single time!
+    let num_positions_that_cause_loops = distinct_positions
+        .iter()
+        .filter(|&pos| *pos != start_pos)
+        .map(|pos| {
+            // add the obstacle at every point on the original route
+            let mut map = map.clone();
+            map[pos.0 as usize][pos.1 as usize] = '#';
+            map
+        })
+        .filter(|x| has_loop(x, start_pos))
         .count();
-    dbg!(distinct_positions);
+    dbg!(num_positions_that_cause_loops);
 }
 
 fn find_start(map: &[Vec<char>]) -> Position {
@@ -37,7 +65,7 @@ fn find_start(map: &[Vec<char>]) -> Position {
     panic!("No start found");
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Direction(isize, isize);
 impl Direction {
     const UP: Direction = Direction(-1, 0);
@@ -56,7 +84,7 @@ impl Direction {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Position(isize, isize);
 impl Position {
     fn step(&self, dir: Direction) -> Self {
@@ -87,12 +115,11 @@ fn find_next_pos(
     }
 }
 
-fn walk(map: &[Vec<char>]) -> Vec<Vec<char>> {
+fn walk_until_off_map(map: &[Vec<char>]) -> Vec<Vec<char>> {
     let mut map = map.to_vec();
     let start = find_start(&map);
     let mut pos = start;
     let mut dir = Direction::UP;
-
     loop {
         if let Some((new_pos, new_dir)) = find_next_pos(pos, dir, &map) {
             pos = new_pos;
@@ -104,6 +131,27 @@ fn walk(map: &[Vec<char>]) -> Vec<Vec<char>> {
             // println!();
         } else {
             return map;
+        }
+    }
+}
+
+fn has_loop(map: &[Vec<char>], start: Position) -> bool {
+    let mut pos = start;
+    let mut dir = Direction::UP;
+    let mut visited_positions: HashSet<(Position, Direction)> = HashSet::new();
+    loop {
+        if let Some((new_pos, new_dir)) = find_next_pos(pos, dir, map) {
+            if !visited_positions.insert((new_pos, new_dir)) {
+                // this wasn't the first time we visited this position in this direction,
+                // so we have a loop.
+                return true;
+            } else {
+                // let's keep walking
+                pos = new_pos;
+                dir = new_dir;
+            }
+        } else {
+            return false;
         }
     }
 }
