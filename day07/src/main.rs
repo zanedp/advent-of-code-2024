@@ -16,7 +16,12 @@ fn multiply(a: u64, b: u64) -> u64 {
     a * b
 }
 
-const OPERATORS: [fn(u64, u64) -> u64; 2] = [add, multiply];
+fn concatenate(a: u64, b: u64) -> u64 {
+    format!("{}{}", a, b).parse().unwrap()
+}
+
+const OPERATORS_PT1: [fn(u64, u64) -> u64; 2] = [add, multiply];
+const OPERATORS_PT2: [fn(u64, u64) -> u64; 3] = [add, multiply, concatenate];
 
 fn has_solution(operators: &[fn(u64, u64) -> u64], goal: u64, accum: u64, list: &[u64]) -> bool {
     if list.is_empty() {
@@ -34,7 +39,7 @@ fn has_solution(operators: &[fn(u64, u64) -> u64], goal: u64, accum: u64, list: 
 
 fn main() {
     let input = EXAMPLE_INPUT;
-    let input = include_str!("input.txt");
+    // let input = include_str!("input.txt");
     let equations = input
         .lines()
         .map(|line| {
@@ -51,10 +56,17 @@ fn main() {
         .collect::<Vec<_>>();
     // dbg!(&equations);
 
-    let total_calibration_result = equations
+    let total_calibration_result_pt1 = equations
         .iter()
-        .filter(|(result, operands)| has_solution(&OPERATORS, *result, 0, operands))
+        .filter(|(result, operands)| has_solution(&OPERATORS_PT1, *result, 0, operands))
         .map(|(result, _)| result)
         .sum::<u64>();
-    dbg!(total_calibration_result);
+    dbg!(total_calibration_result_pt1);
+
+    let total_calibration_result_pt2 = equations
+        .iter()
+        .filter(|(result, operands)| has_solution(&OPERATORS_PT2, *result, 0, operands))
+        .map(|(result, _)| result)
+        .sum::<u64>();
+    dbg!(total_calibration_result_pt2);
 }
