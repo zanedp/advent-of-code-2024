@@ -36,7 +36,9 @@ fn main() {
     }
 
     let map_dimensions = (input_grid.len(), input_grid[0].len());
-    let mut antinodes = HashSet::new();
+
+    // --- Part 1 ---
+    let mut antinodes_pt1 = HashSet::new();
     for (_freq_name, locations) in antenna_locations.iter() {
         for loc0 in locations.iter() {
             for loc1 in locations.iter() {
@@ -50,10 +52,10 @@ fn main() {
                     let antinode0 = (loc0.0 as isize - slope.0, loc0.1 as isize - slope.1);
                     let antinode1 = (loc1.0 as isize + slope.0, loc1.1 as isize + slope.1);
                     if is_in_range(antinode0, map_dimensions) {
-                        antinodes.insert(antinode0);
+                        antinodes_pt1.insert(antinode0);
                     }
                     if is_in_range(antinode1, map_dimensions) {
-                        antinodes.insert(antinode1);
+                        antinodes_pt1.insert(antinode1);
                     }
                 }
             }
@@ -62,7 +64,48 @@ fn main() {
     // antinodes.iter().for_each(|row| {
     //     println!("{:?}", row);
     // });
-    dbg!(antinodes.len());
+    dbg!(antinodes_pt1.len());
+
+    // --- Part 2 ---
+    let mut antinodes_pt2 = HashSet::new();
+    for (_freq_name, locations) in antenna_locations.iter() {
+        for loc0 in locations.iter() {
+            for loc1 in locations.iter() {
+                if loc0 != loc1 {
+                    // dbg!(loc0, loc1);
+                    // (rise, run)
+                    let slope = (
+                        loc1.0 as isize - loc0.0 as isize,
+                        loc1.1 as isize - loc0.1 as isize,
+                    );
+                    // let's go one way, until we get off the map
+                    let mut cur_pos = (loc0.0 as isize, loc0.1 as isize);
+                    loop {
+                        let antinode = (cur_pos.0 - slope.0, cur_pos.1 - slope.1);
+                        if !is_in_range(antinode, map_dimensions) {
+                            break;
+                        }
+                        antinodes_pt2.insert(antinode);
+                        cur_pos = antinode;
+                    }
+                    // now, let's go the other way, until we get off the map
+                    let mut cur_pos = (loc0.0 as isize, loc0.1 as isize);
+                    loop {
+                        let antinode = (cur_pos.0 + slope.0, cur_pos.1 + slope.1);
+                        if !is_in_range(antinode, map_dimensions) {
+                            break;
+                        }
+                        antinodes_pt2.insert(antinode);
+                        cur_pos = antinode;
+                    }
+                }
+            }
+        }
+    }
+    // antinodes.iter().for_each(|row| {
+    //     println!("{:?}", row);
+    // });
+    dbg!(antinodes_pt2.len());
 }
 
 fn is_in_range(loc: (isize, isize), map_dimensions: (usize, usize)) -> bool {
